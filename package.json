@@ -1,0 +1,16 @@
+{
+  "name": "petwebapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "client": "cd client && npm run dev",
+    "admin": "cd admin && npm run dev",
+    "install-all": "npm install && cd client && npm install && cd ../admin && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
