@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "client": "cd client && npm run dev",
     "admin": "cd admin && npm run dev",
-    "install-all": "npm install && cd client && npm install && cd ../admin && npm install"
+    "landing": "cd landing && npm run dev",
+    "install-all": "npm install && cd client && npm install && cd ../admin && npm install && cd ../landing && npm install"
   },
   "keywords": [],
   "author": "",

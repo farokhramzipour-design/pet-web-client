@@ -7,10 +7,15 @@ export const addPet = (formData) => api.post('/pets', formData, {
 
 export const getPets = () => api.get('/pets');
 export const getPet = (id) => api.get(`/pets/${id}`);
-export const updatePet = (id, petData) => api.put(`/pets/${id}`, petData);
+
+// Changed updatePet to handle FormData as per new API docs
+export const updatePet = (id, formData) => api.put(`/pets/${id}`, formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+
 export const deletePet = (id) => api.delete(`/pets/${id}`);
 
-// Images
+// Images (these are for adding *additional* images, not the primary one on pet create/update)
 export const uploadPetImage = (id, formData) => api.post(`/pets/${id}/images`, formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
