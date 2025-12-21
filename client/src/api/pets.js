@@ -1,7 +1,11 @@
 import api from './axios';
 
+// Changed addPet to handle FormData
+export const addPet = (formData) => api.post('/pets', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+
 export const getPets = () => api.get('/pets');
-export const addPet = (petData) => api.post('/pets', petData);
 export const getPet = (id) => api.get(`/pets/${id}`);
 export const updatePet = (id, petData) => api.put(`/pets/${id}`, petData);
 export const deletePet = (id) => api.delete(`/pets/${id}`);

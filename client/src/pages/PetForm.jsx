@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Container, Typography, TextField, Button, Box, MenuItem, Paper, Alert } from '@mui/material';
+import { Container, Typography, TextField, Button, Box, MenuItem, Paper, Alert, Input } from '@mui/material';
 import { petsApi } from '../api';
 
 export default function PetForm() {
@@ -16,9 +16,11 @@ export default function PetForm() {
     date_of_birth: '',
     color: '',
     microchip_id: '',
+    weight: '',
     notes: '',
     status: 'ACTIVE'
   });
+  const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -31,12 +33,12 @@ export default function PetForm() {
     try {
       const response = await petsApi.getPet(id);
       const pet = response.data;
-      // Format date for input field (YYYY-MM-DD)
       const formattedDate = pet.date_of_birth ? new Date(pet.date_of_birth).toISOString().split('T')[0] : '';
       
       setFormData({
         ...pet,
-        date_of_birth: formattedDate
+        date_of_birth: formattedDate,
+        status: pet.status ? pet.status.toUpperCase() : 'ACTIVE'
       });
     } catch (err) {
       setError('Failed to load pet details.');
@@ -48,14 +50,59 @@ export default function PetForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
       if (isEditMode) {
-        await petsApi.updatePet(id, formData);
+        // Update logic (PUT) - usually JSON
+        const allowedFields = [
+          'name', 'pet_type', 'breed', 'gender', 'date_of_birth', 
+          'color', 'microchip_id', 'weight', 'notes', 'status',
+          'allergies', 'medical_conditions', 'medications'
+        ];
+        
+        const payload = {};
+        for (const field of allowedFields) {
+          if (formData[field] !== undefined && formData[field] !== null) {
+            payload[field] = formData[field];
+          }
+        }
+        payload.weight = payload.weight ? parseFloat(payload.weight) : null;
+
+        await petsApi.updatePet(id, payload);
+        
+        // If there's a new image in edit mode, upload it separately
+        if (imageFile) {
+          const imageFormData = new FormData();
+          imageFormData.append('image', imageFile);
+          imageFormData.append('is_primary', 'true');
+          await petsApi.uploadPetImage(id, imageFormData);
+        }
+
       } else {
-        await petsApi.addPet(formData);
+        // Create logic (POST) - Multipart Form Data
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('pet_type', formData.pet_type);
+        if (formData.breed) data.append('breed', formData.breed);
+        if (formData.gender) data.append('gender', formData.gender);
+        if (formData.date_of_birth) data.append('date_of_birth', formData.date_of_birth);
+        if (formData.weight) data.append('weight', formData.weight);
+        if (formData.color) data.append('color', formData.color);
+        if (formData.microchip_id) data.append('microchip_id', formData.microchip_id);
+        if (formData.notes) data.append('notes', formData.notes);
+        if (imageFile) {
+          data.append('image', imageFile);
+        }
+
+        await petsApi.addPet(data);
       }
       navigate('/pets');
     } catch (err) {
@@ -133,6 +180,15 @@ export default function PetForm() {
           <TextField
             margin="normal"
             fullWidth
+            label="Weight (kg)"
+            name="weight"
+            type="number"
+            value={formData.weight}
+            onChange={handleChange}
+          />
+          <TextField
+            margin="normal"
+            fullWidth
             label="Microchip ID"
             name="microchip_id"
             value={formData.microchip_id}
@@ -148,18 +204,39 @@ export default function PetForm() {
             value={formData.notes}
             onChange={handleChange}
           />
-          <TextField
-            select
-            margin="normal"
-            fullWidth
-            label="Status"
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-          >
-            <MenuItem value="ACTIVE">Active</MenuItem>
-            <MenuItem value="ARCHIVED">Archived</MenuItem>
-          </TextField>
+          
+          {/* Image Upload Field */}
+          <Box sx={{ mt: 2, mb: 1 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Pet Image (Optional)
+            </Typography>
+            <Input
+              type="file"
+              onChange={handleImageChange}
+              inputProps={{ accept: 'image/*' }}
+              fullWidth
+            />
+            {imageFile && (
+              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                Selected: {imageFile.name}
+              </Typography>
+            )}
+          </Box>
+
+          {isEditMode && (
+            <TextField
+              select
+              margin="normal"
+              fullWidth
+              label="Status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+            >
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="ARCHIVED">Archived</MenuItem>
+            </TextField>
+          )}
 
           <Button
             type="submit"
